@@ -6,13 +6,11 @@ pipeline {
                 script {
                     catchError(buildResult: 'SUCCESS') {
                         sh '''
-                        # Controleer of de container draait en stop hem zo nodig
-                        if [ "$(docker ps -q -f name=samplerunning)" ]; then
-                            docker stop samplerunning
-                        fi
-                        # Verwijder de container als deze nog bestaat
-                        if [ "$(docker ps -a -q -f name=samplerunning)" ]; then
-                            docker rm samplerunning
+                        # Controleer of de container bestaat en forceer stop/verwijdering
+                        CONTAINER_ID=$(docker ps -a -q -f name=samplerunning)
+                        if [ ! -z "$CONTAINER_ID" ]; then
+                            docker stop samplerunning || true
+                            docker rm samplerunning || true
                         fi
                         '''
                     }
