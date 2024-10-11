@@ -5,20 +5,14 @@ pipeline {
         stage('Preparation') {
             steps {
                 script {
-                    catchError(buildResult: 'SUCCESS') {
-                        sh '''
-                        # Controleer of de container bestaat en forceer stop/verwijdering
-                        if [ "$(docker ps -q -f name=samplerunning)" ]; then
-                            echo "Stopping running container..."
-                            docker stop samplerunning || true
-                        fi
-                        
-                        if [ "$(docker ps -a -q -f name=samplerunning)" ]; then
-                            echo "Removing existing container..."
-                            docker rm -f samplerunning || true
-                        fi
-                        '''
-                    }
+                    sh '''
+                    # Controleer of er een bestaande container is met de naam 'samplerunning'
+                    if [ "$(docker ps -a -q -f name=samplerunning)" ]; then
+                        echo "Stopping and removing existing container 'samplerunning'..."
+                        docker stop samplerunning || true
+                        docker rm samplerunning || true
+                    fi
+                    '''
                 }
             }
         }
@@ -27,7 +21,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    # Bouw de Docker-afbeelding
+                    # Bouw de Docker image
                     echo "Building Docker image..."
                     docker build -t sampleapp:latest .
                     '''
@@ -39,7 +33,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    # Start de container
+                    # Start een nieuwe container met de naam 'samplerunning'
                     echo "Starting new container..."
                     docker run -d --name samplerunning -p 5050:5050 sampleapp:latest
                     '''
@@ -51,8 +45,8 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    # Test de applicatie
-                    echo "Running application tests..."
+                    # Test de applicatie om te controleren of deze draait
+                    echo "Testing the application..."
                     curl --fail http://localhost:5050 || exit 1
                     '''
                 }
@@ -63,9 +57,9 @@ pipeline {
     post {
         always {
             script {
-                echo 'Cleaning up Docker...'
+                echo 'Cleaning up...'
                 sh '''
-                # Cleanup Docker resources after pipeline execution
+                # Verwijder de container na de build
                 docker stop samplerunning || true
                 docker rm samplerunning || true
                 '''
