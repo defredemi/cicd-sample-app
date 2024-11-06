@@ -23,3 +23,10 @@ cd tempdir || exit
 docker build -t sampleapp .
 docker run -t -d -p 5050:5050 --name samplerunning sampleapp
 docker ps -a 
+
+# Verwijder de container als deze al bestaat
+docker rm -f samplerunning || true
+
+# Start de nieuwe container
+echo "Starting a new container"
+docker run -t -d -p 5050:5050 --name samplerunning sampleapp
